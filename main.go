@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"e-shop-modal/internal/config"
 	"e-shop-modal/internal/handlers"
+	"e-shop-modal/internal/repositories"
 	"e-shop-modal/internal/services"
-	"e-shop-modal/internal/store"
 	"fmt"
 	"net/http"
 
@@ -29,9 +29,9 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Conectado a MySQL")
-	productStore := store.New(db)
-	productService := services.New(productStore)
-	handlers := handlers.New(productService)
+	productRepository := repositories.NewProductRepository(db)
+	productService := services.NewProductService(productRepository)
+	handlers := handlers.NewProductHandler(productService)
 
 	http.HandleFunc("/products", handlers.HandleProducts)
 	http.HandleFunc("/products/", handlers.HandleProductByID)

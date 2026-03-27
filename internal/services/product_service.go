@@ -2,7 +2,7 @@ package services
 
 import (
 	"e-shop-modal/internal/models"
-	"e-shop-modal/internal/store"
+	"e-shop-modal/internal/repositories"
 	"errors"
 )
 
@@ -10,22 +10,22 @@ import (
 //Log(msg, error string)
 //}
 
-type Service struct {
-	store store.Store
+type ProductService struct {
+	repository *repositories.ProductRepository
 	//logger Logger
 }
 
-func New(s store.Store) *Service {
-	return &Service{
-		store: s,
+func NewProductService(r *repositories.ProductRepository) *ProductService {
+	return &ProductService{
+		repository: r,
 		//logger: nil,
 	}
 }
 
-func (s *Service) ObtenerTodosLosProducts() ([]*models.Product, error) {
+func (s *ProductService) ObtenerTodosLosProducts() ([]*models.Product, error) {
 	//s.logger.Log("Estamos obteniendo productos", "")
 
-	products, err := s.store.GetAll()
+	products, err := s.repository.GetAll()
 	if err != nil {
 		//s.logger.Log("Error: %s", err.Error())
 		return nil, err
@@ -33,25 +33,25 @@ func (s *Service) ObtenerTodosLosProducts() ([]*models.Product, error) {
 	return products, nil
 }
 
-func (s *Service) ObtenerProductPorID(id int) (*models.Product, error) {
-	return s.store.GetByID(id)
+func (s *ProductService) ObtenerProductPorID(id int) (*models.Product, error) {
+	return s.repository.GetByID(id)
 }
 
-func (s *Service) SubirProduct(product models.Product) (*models.Product, error) {
+func (s *ProductService) SubirProduct(product models.Product) (*models.Product, error) {
 	if product.Tipo == "" {
 		return nil, errors.New("El producto no tiene nombre")
 	}
-	return s.store.Create(&product)
+	return s.repository.Create(&product)
 }
 
-func (s *Service) ModificarProduct(id int, product models.Product) (*models.Product, error) {
+func (s *ProductService) ModificarProduct(id int, product models.Product) (*models.Product, error) {
 	if product.Tipo == "" {
 		return nil, errors.New("El producto no tiene nombre")
 	}
-	return s.store.Update(id, &product)
+	return s.repository.Update(id, &product)
 }
 
-func (s *Service) QuitarProduct(id int) error {
-	return s.store.Delete(id)
+func (s *ProductService) QuitarProduct(id int) error {
+	return s.repository.Delete(id)
 
 }
