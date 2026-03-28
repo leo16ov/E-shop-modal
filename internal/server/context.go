@@ -35,6 +35,9 @@ func (c *Context) Set(key string, value interface{}) {
 	c.values[key] = value
 }
 func (c *Context) Get(key string) interface{} {
+	if c.values == nil {
+		return nil
+	}
 	return c.values[key]
 }
 

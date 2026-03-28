@@ -77,3 +77,23 @@ func (h *UserHandler) HandleLogIn(c *server.Context) {
 	})
 
 }
+
+func (h *UserHandler) Profile(c *server.Context) {
+	val := c.Get("user_id")
+
+	userID, ok := val.(uint)
+	if !ok {
+		c.Status(http.StatusUnauthorized)
+		c.Send("No autorizado")
+		return
+	}
+
+	email, _ := c.Get("email").(string)
+	rol, _ := c.Get("rol").(string)
+
+	c.JSONResponse(http.StatusOK, map[string]interface{}{
+		"user_id": userID,
+		"email":   email,
+		"rol":     rol,
+	})
+}
