@@ -8,9 +8,9 @@ import (
 
 type Context struct {
 	RWriter http.ResponseWriter
-	Request http.Request
+	Request *http.Request
 	Ctx     context.Context
-	userID  uint
+	values  map[string]interface{}
 }
 
 func (c *Context) Send(text string) {
@@ -27,12 +27,21 @@ func (c *Context) JSONResponse(code int, data interface{}) error {
 func (c *Context) BindJSON(dest interface{}) error {
 	return json.NewDecoder(c.Request.Body).Decode(dest)
 }
-func (c *Context) SetUserID(id uint) {
-	c.userID = id
+
+func (c *Context) Set(key string, value interface{}) {
+	if c.values == nil {
+		c.values = make(map[string]interface{})
+	}
+	c.values[key] = value
 }
-func (c *Context) GetUserID() uint {
-	return c.userID
+func (c *Context) Get(key string) interface{} {
+	return c.values[key]
 }
+
+func (c *Context) GetHeader(key string) string {
+	return c.Request.Header.Get(key)
+}
+
 func (c *Context) Context() context.Context {
 	return c.Ctx
 }

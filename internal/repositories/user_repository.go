@@ -42,3 +42,14 @@ func (r *UserRepository) EmailExists(email string) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
+	var user models.User
+	q := "SELECT id_usuario, nombre, apellido, contrasena, telefono, dni, rol FROM Usuario WHERE email= ?"
+
+	err := r.db.QueryRow(q, email).Scan(&user.ID, &user.Nombre, &user.Apellido, &user.Contrasena, &user.Telefono, &user.DNI, &user.Rol)
+	if err != nil {
+		return nil, fmt.Errorf("Error al obtener el usuario")
+	}
+	return &user, nil
+}
