@@ -36,5 +36,16 @@ func (s *UserService) SignUp(user *models.User) (*models.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
 
+func (s *UserService) LogIn(email, contrasena string) (*models.User, error) {
+	user, err := s.repository.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Contrasena), []byte(contrasena))
+	if err != nil {
+		return nil, fmt.Errorf("Credenciales invalidas")
+	}
+	return user, nil
 }
