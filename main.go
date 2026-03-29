@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"e-shop-modal/internal/config"
 	"e-shop-modal/internal/handlers"
+	"e-shop-modal/internal/middleware"
 	"e-shop-modal/internal/repositories"
+	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/services"
 	"fmt"
 	"net/http"
@@ -29,12 +31,30 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Conectado a MySQL")
-	productRepository := repositories.NewProductRepository(db)
+	/*productRepository := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepository)
-	handlers := handlers.NewProductHandler(productService)
+	productHandler := handlers.NewProductHandler(productService)
+	*/
+	userRepository := repositories.NewUserRepository(db)
+	userService := services.NewUserService(userRepository)
+	userHandler := handlers.NewUserHandler(userService)
 
-	http.HandleFunc("/products", handlers.HandleProducts)
-	http.HandleFunc("/products/", handlers.HandleProductByID)
+	mux := http.NewServeMux()
+	// públicas
+	server.HandleFunc(mux, "POST /signup", userHandler.HandleSignUp)
+	server.HandleFunc(mux, "POST /login", userHandler.HandleLogIn)
 
-	http.ListenAndServe(":8080", nil)
+	// protegidas
+
+	server.HandleProtected(
+		mux,
+		"GET /profile",
+		userHandler.Profile,
+		middleware.JWTMiddleware,
+	)
+	/*
+		http.HandleFunc("/products", productHandler.HandleProducts)
+		http.HandleFunc("/products/", productHandler.HandleProductByID)*/
+
+	http.ListenAndServe(":8080", mux)
 }

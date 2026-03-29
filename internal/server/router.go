@@ -2,43 +2,34 @@ package server
 
 import "net/http"
 
-func (app *App) Get(path string, handler func(*Context)) {
-	app.mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {
-		handler(&Context{
+func HandleFunc(
+	mux *http.ServeMux,
+	pattern string,
+	handler func(*Context),
+) {
+	mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		ctx := &Context{
 			RWriter: w,
 			Request: r,
 			Ctx:     r.Context(),
-		})
+		}
+		handler(ctx)
 	})
-	app.handlerCount++
 }
-func (app *App) Post(path string, handler func(*Context)) {
-	app.mux.HandleFunc("POST "+path, func(w http.ResponseWriter, r *http.Request) {
-		handler(&Context{
+func HandleProtected(
+	mux *http.ServeMux,
+	pattern string,
+	handler func(*Context),
+	middleware func(func(*Context)) func(*Context),
+) {
+	mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		ctx := &Context{
 			RWriter: w,
 			Request: r,
 			Ctx:     r.Context(),
-		})
+		}
+
+		finalHandler := middleware(handler)
+		finalHandler(ctx)
 	})
-	app.handlerCount++
-}
-func (app *App) Put(path string, handler func(*Context)) {
-	app.mux.HandleFunc("PUT "+path, func(w http.ResponseWriter, r *http.Request) {
-		handler(&Context{
-			RWriter: w,
-			Request: r,
-			Ctx:     r.Context(),
-		})
-	})
-	app.handlerCount++
-}
-func (app *App) Delete(path string, handler func(*Context)) {
-	app.mux.HandleFunc("DELETE "+path, func(w http.ResponseWriter, r *http.Request) {
-		handler(&Context{
-			RWriter: w,
-			Request: r,
-			Ctx:     r.Context(),
-		})
-	})
-	app.handlerCount++
 }

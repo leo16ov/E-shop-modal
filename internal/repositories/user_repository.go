@@ -18,7 +18,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Create(user *models.User) error {
 	q := `INSERT INTO Usuario(nombre, apellido, email, contrasena, telefono, dni, rol) 
-		VALUES(?, ?, ?, ?, ?, ?, Admin)`
+		VALUES(?, ?, ?, ?, ?, ?, "Admin")`
 	resp, err := r.db.Exec(q, user.Nombre, user.Apellido, user.Email, user.Contrasena, user.Telefono, user.DNI)
 	if err != nil {
 		return fmt.Errorf("Error al crear usuario %w", err)
@@ -45,9 +45,9 @@ func (r *UserRepository) EmailExists(email string) (bool, error) {
 
 func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 	var user models.User
-	q := "SELECT id_usuario, nombre, apellido, contrasena, telefono, dni, rol FROM Usuario WHERE email= ?"
+	q := "SELECT id_usuario, nombre, apellido, contrasena, rol, email FROM Usuario WHERE email= ?"
 
-	err := r.db.QueryRow(q, email).Scan(&user.ID, &user.Nombre, &user.Apellido, &user.Contrasena, &user.Telefono, &user.DNI, &user.Rol)
+	err := r.db.QueryRow(q, email).Scan(&user.ID, &user.Nombre, &user.Apellido, &user.Contrasena, &user.Rol, &user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("Error al obtener el usuario")
 	}
