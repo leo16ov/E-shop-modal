@@ -13,16 +13,14 @@ func JWTMiddleware(next func(*server.Context)) func(*server.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
 
 		if authHeader == "" {
-			c.Status(http.StatusUnauthorized)
-			c.Send("Token requerido")
+			http.Error(c.RWriter, "No autorizado", http.StatusUnauthorized)
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.Status(http.StatusUnauthorized)
-			c.Send("Formato de token inválido")
+			http.Error(c.RWriter, "Formato de token inválido", http.StatusUnauthorized)
 			return
 		}
 

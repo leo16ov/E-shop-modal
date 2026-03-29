@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"e-shop-modal/internal/models"
+	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/services"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,76 +19,104 @@ func NewProductHandler(s *services.ProductService) *ProductHandler {
 	}
 }
 
-func (h *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Request) {
-
-	switch r.Method {
-	case http.MethodGet:
-		products, err := h.services.ObtenerTodosLosProducts()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(products)
-
-	case http.MethodPost:
-		var product models.Product
-		err := json.NewDecoder(r.Body).Decode(&product)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		created, err := h.services.SubirProduct(product)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(created)
-	default:
-		http.Error(w, "Metodo no disponible", http.StatusMethodNotAllowed)
+func (h *ProductHandler) GetProducts(c *server.Context) {
+	products, err := h.services.ObtenerTodosLosProducts()
+	if err != nil {
+		c.JSONResponse(http.StatusInternalServerError, err.Error())
+		return
 	}
+	c.JSONResponse(http.StatusOK, products)
 }
 
-func (h *ProductHandler) HandleProductByID(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/producto/")
-	id, err := strconv.Atoi(idStr)
+func (h *ProductHandler) CreateProduct(c *server.Context) {
+	var product models.Product
+	err := c.BindJSON(&product)
 	if err != nil {
-		http.Error(w, "Algo ha fallado", http.StatusBadRequest)
+		c.JSONResponse(http.StatusBadRequest, err.Error())
+		return
 	}
-	switch r.Method {
-	case http.MethodGet:
-		product, err := h.services.ObtenerProductPorID(id)
-		if err != nil {
-			http.Error(w, "Producto no encontrado", http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(product)
-
-	case http.MethodPut:
-		var product models.Product
-		err := json.NewDecoder(r.Body).Decode(&product)
-		if err != nil {
-			http.Error(w, "Input invalido", http.StatusBadRequest)
-			return
-		}
-		updated, err := h.services.ModificarProduct(id, product)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(updated)
-
-	case http.MethodDelete:
-		if err := h.services.QuitarProduct(id); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusNoContent)
-
-	default:
-		http.Error(w, "Metodo no disponible", http.StatusMethodNotAllowed)
+	created, err := h.services.SubirProduct(product)
+	if err != nil {
+		c.JSONResponse(http.StatusInternalServerError, err.Error())
 	}
+	c.JSONResponse(http.StatusCreated, created)
+}
+
+func (h *ProductHandler) GetProductByID(c *server.Context) {
+	id, err := getIDFromPath(c)
+	if err != nil {
+		c.JSONResponse(http.StatusBadRequest, map[string]string{
+			"error": "ID inválido",
+		})
+		return
+	}
+	product, err := h.services.ObtenerProductPorID(id)
+	if err != nil {
+		c.JSONResponse(http.StatusNotFound, map[string]string{
+			"error": "Producto no encontrado",
+		})
+		return
+	}
+
+	c.JSONResponse(http.StatusOK, product)
+}
+func (h *ProductHandler) UpdateProduct(c *server.Context) {
+
+	id, err := getIDFromPath(c)
+	if err != nil {
+		c.JSONResponse(http.StatusBadRequest, map[string]string{
+			"error": "ID inválido",
+		})
+		return
+	}
+
+	var product models.Product
+	if err := c.BindJSON(&product); err != nil {
+		c.JSONResponse(http.StatusBadRequest, map[string]string{
+			"error": "Datos inválidos",
+		})
+		return
+	}
+
+	updated, err := h.services.ModificarProduct(id, product)
+	if err != nil {
+		c.JSONResponse(http.StatusInternalServerError, map[string]string{
+			"error": "No se pudo actualizar",
+		})
+		return
+	}
+
+	c.JSONResponse(http.StatusOK, updated)
+}
+
+func (h *ProductHandler) DeleteProduct(c *server.Context) {
+
+	id, err := getIDFromPath(c)
+	if err != nil {
+		c.JSONResponse(http.StatusBadRequest, map[string]string{
+			"error": "ID inválido",
+		})
+		return
+	}
+
+	err = h.services.QuitarProduct(id)
+	if err != nil {
+		c.JSONResponse(http.StatusInternalServerError, map[string]string{
+			"error": "No se pudo eliminar",
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func getIDFromPath(c *server.Context) (int, error) {
+	path := c.Request.URL.Path
+
+	// ejemplo: /products/5
+	parts := strings.Split(path, "/")
+
+	idStr := parts[len(parts)-1]
+
+	return strconv.Atoi(idStr)
 }

@@ -31,10 +31,10 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Conectado a MySQL")
-	/*productRepository := repositories.NewProductRepository(db)
+	productRepository := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepository)
 	productHandler := handlers.NewProductHandler(productService)
-	*/
+
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository)
 	userHandler := handlers.NewUserHandler(userService)
@@ -45,16 +45,33 @@ func main() {
 	server.HandleFunc(mux, "POST /login", userHandler.HandleLogIn)
 
 	// protegidas
-
 	server.HandleProtected(
 		mux,
 		"GET /profile",
 		userHandler.Profile,
 		middleware.JWTMiddleware,
 	)
-	/*
-		http.HandleFunc("/products", productHandler.HandleProducts)
-		http.HandleFunc("/products/", productHandler.HandleProductByID)*/
+
+	server.HandleProtected(
+		mux, "GET /products", productHandler.GetProducts,
+		middleware.JWTMiddleware,
+	)
+	server.HandleProtected(
+		mux, "POST /products", productHandler.CreateProduct,
+		middleware.JWTMiddleware,
+	)
+	server.HandleProtected(
+		mux, "GET /products/", productHandler.GetProductByID,
+		middleware.JWTMiddleware,
+	)
+	server.HandleProtected(
+		mux, "PUT /products/", productHandler.UpdateProduct,
+		middleware.JWTMiddleware,
+	)
+	server.HandleProtected(
+		mux, "DELETE /products/", productHandler.DeleteProduct,
+		middleware.JWTMiddleware,
+	)
 
 	http.ListenAndServe(":8080", mux)
 }
