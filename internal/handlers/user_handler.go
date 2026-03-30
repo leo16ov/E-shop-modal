@@ -22,18 +22,18 @@ func (h *UserHandler) HandleSignUp(c *server.Context) {
 	var user models.User
 	err := c.BindJSON(&user)
 	if err != nil {
-		c.JSONResponse(http.StatusBadRequest, "JSON invalido")
+		JSONError(c, http.StatusBadRequest, "JSON invalido")
 		return
 	}
 
 	if user.Email == "" || user.Contrasena == "" || user.Nombre == "" {
-		c.JSONResponse(http.StatusBadRequest, "Email y Contraseña son requeridos")
+		JSONError(c, http.StatusBadRequest, "Email y Contraseña son requeridos")
 		return
 	}
 
 	created, err := h.service.SignUp(&user)
 	if err != nil {
-		c.JSONResponse(http.StatusInternalServerError, err.Error())
+		JSONError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	created.Contrasena = ""
@@ -45,28 +45,22 @@ func (h *UserHandler) HandleLogIn(c *server.Context) {
 
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSONResponse(http.StatusBadRequest, map[string]interface{}{
-			"error": "Credenciales requeridas",
-		})
+		JSONError(c, http.StatusBadRequest, "Credenciales requeridas")
 		return
 	}
 	if req.Email == "" || req.Contrasena == "" {
-		c.JSONResponse(http.StatusBadRequest, map[string]interface{}{
-			"error": "Credenciales inválidas",
-		})
+		JSONError(c, http.StatusBadRequest, "Credenciales inválidas")
 		return
 	}
 
 	user, err := h.service.LogIn(req.Email, req.Contrasena)
 	if err != nil {
-		c.JSONResponse(http.StatusUnauthorized, err)
+		JSONError(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 	token, err := utils.GenerateJWT(uint(user.ID), user.Email, user.Rol)
 	if err != nil {
-		c.JSONResponse(http.StatusInternalServerError, map[string]interface{}{
-			"error": "Error generando token",
-		})
+		JSONError(c, http.StatusInternalServerError, "Error generando token")
 		return
 	}
 	user.Contrasena = ""

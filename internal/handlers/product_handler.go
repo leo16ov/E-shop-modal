@@ -22,7 +22,7 @@ func NewProductHandler(s *services.ProductService) *ProductHandler {
 func (h *ProductHandler) GetProducts(c *server.Context) {
 	products, err := h.services.ObtenerTodosLosProducts()
 	if err != nil {
-		c.JSONResponse(http.StatusInternalServerError, err.Error())
+		JSONError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.JSONResponse(http.StatusOK, products)
@@ -32,12 +32,12 @@ func (h *ProductHandler) CreateProduct(c *server.Context) {
 	var product models.Product
 	err := c.BindJSON(&product)
 	if err != nil {
-		c.JSONResponse(http.StatusBadRequest, err.Error())
+		JSONError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	created, err := h.services.SubirProduct(product)
 	if err != nil {
-		c.JSONResponse(http.StatusInternalServerError, err.Error())
+		JSONError(c, http.StatusInternalServerError, err.Error())
 	}
 	c.JSONResponse(http.StatusCreated, created)
 }
@@ -45,16 +45,13 @@ func (h *ProductHandler) CreateProduct(c *server.Context) {
 func (h *ProductHandler) GetProductByID(c *server.Context) {
 	id, err := getIDFromPath(c)
 	if err != nil {
-		c.JSONResponse(http.StatusBadRequest, map[string]string{
-			"error": "ID inválido",
-		})
+		JSONError(c, http.StatusBadRequest, "ID inválido")
 		return
 	}
 	product, err := h.services.ObtenerProductPorID(id)
 	if err != nil {
-		c.JSONResponse(http.StatusNotFound, map[string]string{
-			"error": "Producto no encontrado",
-		})
+		JSONError(c, http.StatusNotFound,
+			"Producto no encontrado")
 		return
 	}
 
@@ -64,25 +61,19 @@ func (h *ProductHandler) UpdateProduct(c *server.Context) {
 
 	id, err := getIDFromPath(c)
 	if err != nil {
-		c.JSONResponse(http.StatusBadRequest, map[string]string{
-			"error": "ID inválido",
-		})
+		JSONError(c, http.StatusBadRequest, "ID inválido")
 		return
 	}
 
 	var product models.Product
 	if err := c.BindJSON(&product); err != nil {
-		c.JSONResponse(http.StatusBadRequest, map[string]string{
-			"error": "Datos inválidos",
-		})
+		JSONError(c, http.StatusBadRequest, "Datos inválidos")
 		return
 	}
 
 	updated, err := h.services.ModificarProduct(id, product)
 	if err != nil {
-		c.JSONResponse(http.StatusInternalServerError, map[string]string{
-			"error": "No se pudo actualizar",
-		})
+		JSONError(c, http.StatusInternalServerError, "No se pudo actualizar")
 		return
 	}
 
@@ -93,17 +84,13 @@ func (h *ProductHandler) DeleteProduct(c *server.Context) {
 
 	id, err := getIDFromPath(c)
 	if err != nil {
-		c.JSONResponse(http.StatusBadRequest, map[string]string{
-			"error": "ID inválido",
-		})
+		JSONError(c, http.StatusBadRequest, "ID inválido")
 		return
 	}
 
 	err = h.services.QuitarProduct(id)
 	if err != nil {
-		c.JSONResponse(http.StatusInternalServerError, map[string]string{
-			"error": "No se pudo eliminar",
-		})
+		JSONError(c, http.StatusInternalServerError, "No se pudo eliminar")
 		return
 	}
 
