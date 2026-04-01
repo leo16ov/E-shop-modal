@@ -1,8 +1,10 @@
 package services
 
 import (
+	"e-shop-modal/internal/dto"
 	"e-shop-modal/internal/models"
 	"e-shop-modal/internal/repositories"
+	"e-shop-modal/internal/utils"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -38,7 +40,7 @@ func (s *UserService) SignUp(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (s *UserService) LogIn(email, contrasena string) (*models.User, error) {
+func (s *UserService) LogIn(email, contrasena string) (*dto.LoginResponse, error) {
 	user, err := s.repository.GetByEmail(email)
 	if err != nil {
 		return nil, err
@@ -47,5 +49,18 @@ func (s *UserService) LogIn(email, contrasena string) (*models.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Credenciales invalidas")
 	}
-	return user, nil
+	token, err := utils.GenerateJWT(uint(user.ID), user.Email, user.Rol)
+	if err != nil {
+		return nil, fmt.Errorf("Error al generar token")
+	}
+
+	return &dto.LoginResponse{
+		User: &dto.UserLogin{
+			ID:       user.ID,
+			Nombre:   user.Nombre,
+			Apellido: user.Apellido,
+			Email:    user.Email,
+			Rol:      user.Rol,
+		},
+		Token: token}, nil
 }

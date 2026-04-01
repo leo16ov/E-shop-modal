@@ -4,7 +4,6 @@ import (
 	"e-shop-modal/internal/models"
 	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/services"
-	"e-shop-modal/internal/utils"
 	"net/http"
 )
 
@@ -53,23 +52,12 @@ func (h *UserHandler) HandleLogIn(c *server.Context) {
 		return
 	}
 
-	user, err := h.service.LogIn(req.Email, req.Contrasena)
+	loginResponse, err := h.service.LogIn(req.Email, req.Contrasena)
 	if err != nil {
 		JSONError(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-	token, err := utils.GenerateJWT(uint(user.ID), user.Email, user.Rol)
-	if err != nil {
-		JSONError(c, http.StatusInternalServerError, "Error generando token")
-		return
-	}
-	user.Contrasena = ""
-
-	c.JSONResponse(http.StatusOK, map[string]interface{}{
-		"user":  user,
-		"token": token,
-	})
-
+	c.JSONResponse(http.StatusOK, loginResponse)
 }
 
 func (h *UserHandler) Profile(c *server.Context) {
