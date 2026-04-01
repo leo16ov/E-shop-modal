@@ -49,28 +49,28 @@ func main() {
 		mux,
 		"GET /profile",
 		userHandler.Profile,
-		middleware.JWTMiddleware,
+		middleware.Authentication,
 	)
 
 	server.HandleProtected(
 		mux, "GET /products", productHandler.GetProducts,
-		middleware.JWTMiddleware,
+		middleware.Authentication,
 	)
 	server.HandleProtected(
 		mux, "POST /products", productHandler.CreateProduct,
-		middleware.JWTMiddleware,
+		middleware.Authentication,
 	)
 	server.HandleProtected(
 		mux, "GET /products/", productHandler.GetProductByID,
-		middleware.JWTMiddleware,
+		middleware.Authentication,
 	)
 	server.HandleProtected(
 		mux, "PUT /products/", productHandler.UpdateProduct,
-		middleware.JWTMiddleware,
+		middleware.Authentication,
 	)
 	server.HandleProtected(
 		mux, "DELETE /products/", productHandler.DeleteProduct,
-		middleware.JWTMiddleware,
+		middleware.Authentication,
 	)
 
 	http.ListenAndServe(":8080", mux)
