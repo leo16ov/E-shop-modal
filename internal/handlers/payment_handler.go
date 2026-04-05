@@ -29,8 +29,6 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 
 	// Usar el context real de la request
 	resp, err := h.service.CreatePreference(c.Context(), req)
-	// Se le pasa el contexto de la request
-
 	if err != nil {
 		c.JSONResponse(http.StatusInternalServerError, "Error creando preferencia")
 		return
@@ -40,4 +38,27 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 	c.JSONResponse(http.StatusOK, map[string]interface{}{
 		"checkout_url": resp.InitPoint,
 	})
+}
+
+func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
+
+	var body map[string]interface{}
+
+	err := c.BindJSON(&body)
+	if err != nil {
+		JSONError(c, http.StatusBadRequest, "JSON invalido")
+		return
+	}
+
+	// Obtiene el payment_id y lo procesa
+	data := body["data"].(map[string]interface{})
+	paymentID := int(data["id"].(float64))
+
+	err = h.service.ProcessWebhook(paymentID)
+	if err != nil {
+		JSONError(c, http.StatusInternalServerError, "Error al aceptar pago")
+		return
+	}
+
+	c.JSONResponse(http.StatusOK, "Pago exitoso")
 }
