@@ -26,8 +26,7 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
-	err = db.Ping()
-	if err != nil {
+	if err = db.Ping(); err != nil {
 		panic(err)
 	}
 	fmt.Println("Conectado a MySQL")
@@ -39,19 +38,21 @@ func main() {
 	userService := services.NewUserService(userRepository)
 	userHandler := handlers.NewUserHandler(userService)
 
+	orderRepository := repositories.NewOrderRepository(db)
+	paymentService := services.NewPaymentService(config.MPToken, productRepository, orderRepository)
+	paymentHandler := handlers.NewPaymentHandler(paymentService)
+
 	mux := http.NewServeMux()
 	// públicas
 	server.HandleFunc(mux, "POST /signup", userHandler.HandleSignUp)
 	server.HandleFunc(mux, "POST /login", userHandler.HandleLogIn)
+	server.HandleFunc(mux, "POST /webhook", paymentHandler.ConfirmWebhook)
 
 	// protegidas
 	server.HandleProtected(
-		mux,
-		"GET /profile",
-		userHandler.Profile,
+		mux, "GET /profile", userHandler.Profile,
 		middleware.Authentication,
 	)
-
 	server.HandleProtected(
 		mux, "GET /products", productHandler.GetProducts,
 		middleware.Authentication,
@@ -70,6 +71,10 @@ func main() {
 	)
 	server.HandleProtected(
 		mux, "DELETE /products/", productHandler.DeleteProduct,
+		middleware.Authentication,
+	)
+	server.HandleProtected(
+		mux, "POST /payment", paymentHandler.CreateCheckout,
 		middleware.Authentication,
 	)
 

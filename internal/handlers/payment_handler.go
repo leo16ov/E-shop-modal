@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"e-shop-modal/internal/dto"
 	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/services"
+	"encoding/hex"
+	"io"
 	"net/http"
 )
 
@@ -41,6 +45,13 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 }
 
 func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
+	signature := c.GetHeader("x-signature")
+	bodyBytes, _ := io.ReadAll(c.Request.Body)
+
+	if !validateSignature(signature, "TU_WEBHOOK_SECRET", bodyBytes) {
+		JSONError(c, http.StatusUnauthorized, "No autorizado")
+		return
+	}
 
 	var body map[string]interface{}
 
@@ -61,4 +72,14 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	}
 
 	c.JSONResponse(http.StatusOK, "Pago exitoso")
+}
+
+func validateSignature(signature string, secret string, payload []byte) bool {
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write(payload)
+
+	expected := hex.EncodeToString(mac.Sum(nil))
+
+	return hmac.Equal([]byte(signature), []byte(expected))
 }
