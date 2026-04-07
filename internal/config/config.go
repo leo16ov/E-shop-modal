@@ -8,14 +8,10 @@ import (
 )
 
 type Config struct {
-	DBPort     string
-	DBHost     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	Debug      string
-	JWTSecret  string
-	MPToken    string
+	DSN       string
+	Debug     string
+	JWTSecret string
+	MPToken   string
 }
 
 func LoadConfig() *Config {
@@ -25,25 +21,16 @@ func LoadConfig() *Config {
 	}
 	if getEnv("DEBUG", "dev") == "dev" {
 		return &Config{
-			DBPort:     getEnv("DB_PORT", ":5050"),
-			DBHost:     getEnv("DB_HOST", "MySQL"),
-			DBUser:     getEnv("DB_USER", "root"),
-			DBPassword: getEnv("DB_PWD", "12344321"),
-			DBName:     getEnv("DB_NAME", "..."),
-			Debug:      getEnv("DB_NAME", "Dev"),
-			JWTSecret:  getEnv("JWT_SECRET", "mysecretkey"),
-			MPToken:    getEnv("TOKEN_MP_TEST", "..."),
+			DSN:       getEnv("DSN", "..."),
+			Debug:     getEnv("DB_NAME", "Dev"),
+			JWTSecret: getEnv("JWT_SECRET", "mysecretkey"),
+			MPToken:   getEnv("TOKEN_MP_TEST", "..."),
 		}
 	}
 	return &Config{
-		DBPort:     getEnv("DB_PORT", ":5050"),
-		DBHost:     getEnv("DB_HOST", "MySQL"),
-		DBUser:     getEnv("DB_USER", "root"),
-		DBPassword: getEnv("DB_PWD", "12344321"),
-		DBName:     getEnv("DB_NAME", "..."),
-		Debug:      getEnv("DB_NAME", "Prod"),
-		JWTSecret:  getEnv("JWT_SECRET", "mysecretkey"),
-		MPToken:    getEnv("TOKEN_MP_PROD", "..."),
+		Debug:     getEnv("DB_NAME", "Prod"),
+		JWTSecret: getEnv("JWT_SECRET", "mysecretkey"),
+		MPToken:   getEnv("TOKEN_MP_PROD", "..."),
 	}
 }
 

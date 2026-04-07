@@ -12,16 +12,14 @@ import (
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	config := config.LoadConfig()
-	fmt.Println(config.DBPort)
-	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s", //"%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4&loc=Local",
-		config.DBUser, config.DBPassword, config.DBHost, config.DBPort, config.DBName,
-	)
-	db, err := sql.Open("mysql", dsn)
+	dsn := config.DSN
+
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +27,7 @@ func main() {
 	if err = db.Ping(); err != nil {
 		panic(err)
 	}
-	fmt.Println("Conectado a MySQL")
+	fmt.Println("Conectado a la DB")
 	productRepository := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepository)
 	productHandler := handlers.NewProductHandler(productService)
