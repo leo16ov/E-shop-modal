@@ -123,8 +123,14 @@ func (s *PaymentService) GetPayment(paymentID int) (*models.PaymentInfo, error) 
 		TransactionAmount float64 `json:"transaction_amount"`
 		ExternalReference string  `json:"external_reference"`
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("MP respondió %d", resp.StatusCode)
+	}
 
-	json.NewDecoder(resp.Body).Decode(&result)
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return nil, fmt.Errorf("error parseando respuesta MP: %w", err)
+	}
 
 	return &models.PaymentInfo{
 		Status:            result.Status,

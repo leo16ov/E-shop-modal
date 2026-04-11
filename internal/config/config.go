@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	DSN       string
-	Debug     string
-	JWTSecret string
-	MPToken   string
+	DSN           string
+	Debug         string
+	JWTSecret     string
+	MPToken       string
+	WebhookSecret string
 }
 
 func LoadConfig() *Config {
@@ -21,17 +22,19 @@ func LoadConfig() *Config {
 	}
 	if getEnv("DEBUG", "dev") == "dev" {
 		return &Config{
-			DSN:       getEnv("DSN_Cloud", "..."),
-			Debug:     getEnv("DEBUG", "Dev"),
-			JWTSecret: getEnv("JWT_SECRET", "mysecretkey"),
-			MPToken:   getEnv("TOKEN_MP_TEST", "..."),
+			DSN:           getEnv("DSN_Cloud", "..."),
+			Debug:         getEnv("DEBUG", "Dev"),
+			JWTSecret:     getEnv("JWT_SECRET", "mysecretkey"),
+			MPToken:       getEnv("TOKEN_MP_TEST", "..."),
+			WebhookSecret: getEnv("MP_WEBHOOK_SECRET", "JLE02020"),
 		}
 	}
 	return &Config{
-		DSN:       getEnv("DSN_Cloud", "..."),
-		Debug:     getEnv("DEBUG", "Prod"),
-		JWTSecret: getEnv("JWT_SECRET", "mysecretkey"),
-		MPToken:   getEnv("TOKEN_MP_PROD", "..."),
+		DSN:           getEnv("DSN_Cloud", "..."),
+		Debug:         getEnv("DEBUG", "Prod"),
+		JWTSecret:     getEnv("JWT_SECRET", "mysecretkey"),
+		MPToken:       getEnv("TOKEN_MP_PROD", "..."),
+		WebhookSecret: getEnv("MP_WEBHOOK_SECRET", "JLE02020"),
 	}
 }
 

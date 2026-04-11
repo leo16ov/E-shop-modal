@@ -38,7 +38,7 @@ func main() {
 
 	orderRepository := repositories.NewOrderRepository(db)
 	paymentService := services.NewPaymentService(config.MPToken, productRepository, orderRepository)
-	paymentHandler := handlers.NewPaymentHandler(paymentService)
+	paymentHandler := handlers.NewPaymentHandler(paymentService, config.WebhookSecret)
 
 	mux := http.NewServeMux()
 	// públicas

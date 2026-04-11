@@ -18,7 +18,7 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 
 func (r *OrderRepository) Create(total float64) (*models.Order, error) {
 	orden := &models.Order{}
-	query := `INSERT INTO orden (total, status) VALUES ($1, $2) RETURNING id_orden`
+	query := `INSERT INTO orden (total, estado) VALUES ($1, $2) RETURNING id_orden`
 
 	err := r.db.QueryRow(query, total, "pending").Scan(&orden.ID)
 	if err != nil {
