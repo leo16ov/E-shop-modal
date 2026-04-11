@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"e-shop-modal/internal/models"
+	"fmt"
 )
 
 type OrderRepository struct {
@@ -16,43 +17,57 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 }
 
 func (r *OrderRepository) Create(total float64) (*models.Order, error) {
-	query := `INSERT INTO orders (total, status) VALUES (?, ?)`
+	orden := &models.Order{}
+	query := `INSERT INTO orden (total, status) VALUES ($1, $2) RETURNING id_orden`
 
-	result, err := r.db.Exec(query, total, "pending")
+	err := r.db.QueryRow(query, total, "pending").Scan(&orden.ID)
 	if err != nil {
 		return nil, err
 	}
+	orden.Total = total
+	orden.Status = "pending"
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-
-	order := models.Order{
-		ID:     int(id),
-		Total:  total,
-		Status: "pending",
-	}
-
-	return &order, nil
+	return orden, nil
 }
-func (r *OrderRepository) SetExternalReference(orderID int, ref string) error {
-	query := `UPDATE orders SET external_reference = ? WHERE id = ?`
 
-	_, err := r.db.Exec(query, ref, orderID)
-	return err
+func (r *OrderRepository) SetExternalReference(orderID int, ref string) error {
+	query := `UPDATE orden SET referencia_externa = $1 WHERE id_orden = $2`
+
+	result, err := r.db.Exec(query, ref, orderID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("Orden no encontrada")
+	}
+	return nil
 }
 
 func (r *OrderRepository) UpdateStatus(orderID int, status string) error {
-	query := `UPDATE orders SET status = ? WHERE id = ?`
+	query := `UPDATE orden SET estado = $1 WHERE id_orden = $2`
 
-	_, err := r.db.Exec(query, status, orderID)
-	return err
+	result, err := r.db.Exec(query, status, orderID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("Orden no encontrada")
+	}
+
+	return nil
 }
 
 func (r *OrderRepository) GetByID(id int) (*models.Order, error) {
-	query := `SELECT id, total, status, external_reference, created_at
-		FROM orders WHERE id = ?`
+	query := `SELECT id_orden, total, estado, referencia_externa, fecha_emision
+		FROM orden WHERE id_orden = $1`
 
 	var order models.Order
 
@@ -68,8 +83,8 @@ func (r *OrderRepository) GetByID(id int) (*models.Order, error) {
 }
 
 func (r *OrderRepository) GetByExternalReference(ref string) (*models.Order, error) {
-	query := `SELECT id, total, status, external_reference, created_at
-		FROM orders WHERE external_reference = ?`
+	query := `SELECT id_orden, total, estado, referencia_externa, fecha_emision
+		FROM orden WHERE referencia_externa = $1`
 
 	var order models.Order
 

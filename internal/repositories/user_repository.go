@@ -18,23 +18,17 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Create(user *models.User) error {
 	q := `INSERT INTO Usuario(nombre, apellido, email, contrasena, telefono, dni, rol) 
-		VALUES(?, ?, ?, ?, ?, ?, "Admin")`
-	resp, err := r.db.Exec(q, user.Nombre, user.Apellido, user.Email, user.Contrasena, user.Telefono, user.DNI)
+		VALUES($1, $2, $3, $4, $5, $6, 'Admin') RETURNING id_usuario`
+	err := r.db.QueryRow(q, user.Nombre, user.Apellido, user.Email, user.Contrasena, user.Telefono, user.DNI).Scan(&user.ID)
 	if err != nil {
 		return fmt.Errorf("Error al crear usuario %w", err)
 	}
-	id, err := resp.LastInsertId()
-
-	if err != nil {
-		return fmt.Errorf("Error al obtener ID del usuario creado %w", err)
-	}
-	user.ID = int(id)
 	return nil
 }
 
 func (r *UserRepository) EmailExists(email string) (bool, error) {
 	var count int
-	q := "SELECT COUNT(id_usuario) FROM Usuario WHERE email= ?"
+	q := "SELECT COUNT(id_usuario) FROM Usuario WHERE email= $1"
 
 	err := r.db.QueryRow(q, email).Scan(&count)
 	if err != nil {
@@ -45,7 +39,7 @@ func (r *UserRepository) EmailExists(email string) (bool, error) {
 
 func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 	var user models.User
-	q := "SELECT id_usuario, nombre, apellido, contrasena, rol, email FROM Usuario WHERE email= ?"
+	q := "SELECT id_usuario, nombre, apellido, contrasena, rol, email FROM Usuario WHERE email= $1"
 
 	err := r.db.QueryRow(q, email).Scan(&user.ID, &user.Nombre, &user.Apellido, &user.Contrasena, &user.Rol, &user.Email)
 	if err != nil {

@@ -22,14 +22,14 @@ func LoadConfig() *Config {
 	if getEnv("DEBUG", "dev") == "dev" {
 		return &Config{
 			DSN:       getEnv("DSN_Cloud", "..."),
-			Debug:     getEnv("DB_NAME", "Dev"),
+			Debug:     getEnv("DEBUG", "Dev"),
 			JWTSecret: getEnv("JWT_SECRET", "mysecretkey"),
 			MPToken:   getEnv("TOKEN_MP_TEST", "..."),
 		}
 	}
 	return &Config{
 		DSN:       getEnv("DSN_Cloud", "..."),
-		Debug:     getEnv("DB_NAME", "Prod"),
+		Debug:     getEnv("DEBUG", "Prod"),
 		JWTSecret: getEnv("JWT_SECRET", "mysecretkey"),
 		MPToken:   getEnv("TOKEN_MP_PROD", "..."),
 	}
