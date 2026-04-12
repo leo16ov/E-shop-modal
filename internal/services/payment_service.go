@@ -31,6 +31,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Config Mercado Pago
 	cfg, err := config.New(s.accessToken)
 	if err != nil {
+		fmt.Printf("1 %v\n", err.Error())
 		return nil, err
 	}
 	client := preference.NewClient(cfg)
@@ -38,6 +39,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Busca producto en la DB para saber el nombre y el precio
 	dataProduct, err := s.productRepo.GetByID(item.ProductID)
 	if err != nil {
+		fmt.Printf("2 %v\n", err.Error())
 		return nil, err
 	}
 
@@ -47,6 +49,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Crea orden en DB
 	order, err := s.orderRepo.Create(total)
 	if err != nil {
+		fmt.Printf("3 %v\n", err.Error())
 		return nil, err
 	}
 
@@ -55,6 +58,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 
 	err = s.orderRepo.SetExternalReference(order.ID, externalRef)
 	if err != nil {
+		fmt.Printf("4 %v\n", err.Error())
 		return nil, err
 	}
 
