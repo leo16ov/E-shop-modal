@@ -72,13 +72,13 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 				CurrencyID: "ARS",
 			},
 		},
-		BackURLs: &preference.BackURLsRequest{
+		/*BackURLs: &preference.BackURLsRequest{
 			Success: "http://localhost:3000/success",
 			Failure: "http://localhost:3000/failure",
 			Pending: "http://localhost:3000/pending",
 		},
 		AutoReturn:        "approved",
-		ExternalReference: externalRef,
+		ExternalReference: externalRef,*/
 	}
 	fmt.Printf("Hola 2")
 	return client.Create(ctx, req)
