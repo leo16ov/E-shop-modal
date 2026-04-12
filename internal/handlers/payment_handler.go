@@ -38,7 +38,7 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 	// Usar el context real de la request
 	resp, err := h.service.CreatePreference(c.Context(), req)
 	if err != nil {
-		fmt.Printf("ERROR CreatePreference: %v\n", err)
+		fmt.Printf("ERROR CreatePreference: %v\n", err.Error())
 		c.JSONResponse(http.StatusInternalServerError, "Error creando preferencia")
 		return
 	}
