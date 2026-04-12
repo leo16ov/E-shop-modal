@@ -53,6 +53,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 		return nil, err
 	}
 
+	fmt.Printf("Por aca")
 	// Usar ID como external_reference y guardarlo en DB
 	externalRef := fmt.Sprintf("%d", order.ID)
 
@@ -61,7 +62,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 		fmt.Printf("4 %v\n", err.Error())
 		return nil, err
 	}
-
+	fmt.Printf("Hola")
 	req := preference.Request{
 		Items: []preference.ItemRequest{
 			{
@@ -79,7 +80,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 		AutoReturn:        "approved",
 		ExternalReference: externalRef,
 	}
-
+	fmt.Printf("Hola 2")
 	return client.Create(ctx, req)
 }
 
