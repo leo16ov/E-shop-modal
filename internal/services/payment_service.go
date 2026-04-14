@@ -31,7 +31,6 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Config Mercado Pago
 	cfg, err := config.New(s.accessToken)
 	if err != nil {
-		fmt.Printf("1 %v\n", err.Error())
 		return nil, err
 	}
 	client := preference.NewClient(cfg)
@@ -39,7 +38,6 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Busca producto en la DB para saber el nombre y el precio
 	dataProduct, err := s.productRepo.GetByID(item.ProductID)
 	if err != nil {
-		fmt.Printf("2 %v\n", err.Error())
 		return nil, err
 	}
 
@@ -49,20 +47,16 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Crea orden en DB
 	order, err := s.orderRepo.Create(total)
 	if err != nil {
-		fmt.Printf("3 %v\n", err.Error())
 		return nil, err
 	}
 
-	fmt.Printf("Por aca")
 	// Usar ID como external_reference y guardarlo en DB
 	externalRef := fmt.Sprintf("%d", order.ID)
 
 	err = s.orderRepo.SetExternalReference(order.ID, externalRef)
 	if err != nil {
-		fmt.Printf("4 %v\n", err.Error())
 		return nil, err
 	}
-	fmt.Printf("Hola")
 	req := preference.Request{
 		Items: []preference.ItemRequest{
 			{
@@ -80,11 +74,10 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 		AutoReturn:        "approved",
 		ExternalReference: externalRef,*/
 	}
-	fmt.Printf("Hola 2")
 	return client.Create(ctx, req)
 }
 
-func (s *PaymentService) ProcessWebhook(paymentID int) error {
+func (s *PaymentService) ProcessWebhook(paymentID int64) error {
 
 	// Obtiene el pago real desde MP
 	payment, err := s.GetPayment(paymentID)
@@ -109,7 +102,7 @@ func (s *PaymentService) ProcessWebhook(paymentID int) error {
 	return s.orderRepo.UpdateStatus(order.ID, payment.Status)
 }
 
-func (s *PaymentService) GetPayment(paymentID int) (*models.PaymentInfo, error) {
+func (s *PaymentService) GetPayment(paymentID int64) (*models.PaymentInfo, error) {
 
 	url := fmt.Sprintf("https://api.mercadopago.com/v1/payments/%d", paymentID)
 

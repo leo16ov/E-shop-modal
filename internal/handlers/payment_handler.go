@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -37,6 +38,7 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 
 	// Usar el context real de la request
 	resp, err := h.service.CreatePreference(c.Context(), req)
+	fmt.Println(resp.ID)
 	if err != nil {
 		fmt.Printf("ERROR CreatePreference: %v\n", err.Error())
 		c.JSONResponse(http.StatusInternalServerError, "Error creando preferencia")
@@ -45,6 +47,7 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 
 	// Devolver init_point
 	c.JSONResponse(http.StatusOK, map[string]interface{}{
+		"prefence_id":  resp.ID,
 		"checkout_url": resp.InitPoint,
 	})
 }
@@ -65,27 +68,30 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 		return
 	}
 
-	//Usa Unmarshal sobre los bytes ya leídos (no BindJSON)
-	var body map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &body); err != nil {
+	// Deserializa a struct tipado (sin castings manuales)
+	var payload *dto.Payload
+	if err := json.Unmarshal(bodyBytes, &payload); err != nil {
 		JSONError(c, http.StatusBadRequest, "JSON inválido")
 		return
 	}
-
-	// Obtiene el payment_id y lo procesa
-	data, ok := body["data"].(map[string]interface{})
-	if !ok {
-		JSONError(c, http.StatusBadRequest, "Payload inválido")
+	// Filtra eventos que no son de pago
+	if payload.Type != "payment" {
+		c.JSONResponse(http.StatusOK, "evento ignorado")
 		return
 	}
-	paymentID := int(data["id"].(float64))
-
-	err = h.service.ProcessWebhook(paymentID)
-	if err != nil {
-		JSONError(c, http.StatusInternalServerError, "Error al procesar pago")
+	if payload.Action != "payment.created" && payload.Action != "payment.updated" {
+		c.JSONResponse(http.StatusOK, "accion ignorada")
 		return
 	}
-	c.JSONResponse(http.StatusOK, "Pago exitoso")
+
+	// Proceso de errores internos no los propagamos a MP
+	if err := h.service.ProcessWebhook(payload.Data.ID); err != nil {
+		log.Printf("error procesando webhook payment_id=%d: %v", payload.Data.ID, err)
+		c.JSONResponse(http.StatusOK, "ok")
+		return
+	}
+
+	c.JSONResponse(http.StatusOK, "Pago procesado")
 }
 
 // validateMPSignature implementa la validación real de MP.
