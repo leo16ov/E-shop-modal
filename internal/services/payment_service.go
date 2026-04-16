@@ -1,10 +1,10 @@
 package services
 
 import (
-	"context"
 	"e-shop-modal/internal/dto"
 	"e-shop-modal/internal/models"
 	"e-shop-modal/internal/repositories"
+	"e-shop-modal/internal/server"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -27,7 +27,7 @@ func NewPaymentService(token string, p *repositories.ProductRepository, o *repos
 	}
 }
 
-func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.CheckoutItem) (*preference.Response, error) {
+func (s *PaymentService) CreatePreference(c *server.Context, item *dto.CheckoutItem) (*preference.Response, error) {
 	// Config Mercado Pago
 	cfg, err := config.New(s.accessToken)
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	client := preference.NewClient(cfg)
 
 	// Busca producto en la DB para saber el nombre y el precio
-	dataProduct, err := s.productRepo.GetByID(item.ProductID)
+	dataProduct, err := s.productRepo.GetByID(c, item.ProductID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	total := float64(dataProduct.Precio) * float64(item.Quantity)
 
 	// Crea orden en DB
-	order, err := s.orderRepo.Create(total)
+	order, err := s.orderRepo.Create(c, total)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 	// Usar ID como external_reference y guardarlo en DB
 	externalRef := fmt.Sprintf("%d", order.ID)
 
-	err = s.orderRepo.SetExternalReference(order.ID, externalRef)
+	err = s.orderRepo.SetExternalReference(c, order.ID, externalRef)
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +74,10 @@ func (s *PaymentService) CreatePreference(ctx context.Context, item *dto.Checkou
 		AutoReturn:        "approved",
 		ExternalReference: externalRef,*/
 	}
-	return client.Create(ctx, req)
+	return client.Create(c.Context(), req)
 }
 
-func (s *PaymentService) ProcessWebhook(paymentID int64) error {
+func (s *PaymentService) ProcessWebhook(c *server.Context, paymentID int64) error {
 
 	// Obtiene el pago real desde MP
 	payment, err := s.GetPayment(paymentID)
@@ -87,6 +87,7 @@ func (s *PaymentService) ProcessWebhook(paymentID int64) error {
 
 	// Busca orden
 	order, err := s.orderRepo.GetByExternalReference(
+		c,
 		fmt.Sprintf("%s", payment.ExternalReference),
 	)
 	if err != nil {
@@ -99,7 +100,7 @@ func (s *PaymentService) ProcessWebhook(paymentID int64) error {
 	}
 
 	// Actualiza el estado
-	return s.orderRepo.UpdateStatus(order.ID, payment.Status)
+	return s.orderRepo.UpdateStatus(c, order.ID, payment.Status)
 }
 
 func (s *PaymentService) GetPayment(paymentID int64) (*models.PaymentInfo, error) {

@@ -30,7 +30,7 @@ func (h *UserHandler) HandleSignUp(c *server.Context) {
 		return
 	}
 
-	created, err := h.service.SignUp(&user)
+	created, err := h.service.SignUp(c, &user)
 	if err != nil {
 		JSONError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -52,7 +52,7 @@ func (h *UserHandler) HandleLogIn(c *server.Context) {
 		return
 	}
 
-	loginResponse, err := h.service.LogIn(req.Email, req.Contrasena)
+	loginResponse, err := h.service.LogIn(c, req.Email, req.Contrasena)
 	if err != nil {
 		JSONError(c, http.StatusUnauthorized, err.Error())
 		return

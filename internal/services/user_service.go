@@ -4,6 +4,7 @@ import (
 	"e-shop-modal/internal/dto"
 	"e-shop-modal/internal/models"
 	"e-shop-modal/internal/repositories"
+	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/utils"
 	"fmt"
 
@@ -20,8 +21,8 @@ func NewUserService(r *repositories.UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) SignUp(user *models.User) (*models.User, error) {
-	exists, err := s.repository.EmailExists(user.Email)
+func (s *UserService) SignUp(c *server.Context, user *models.User) (*models.User, error) {
+	exists, err := s.repository.EmailExists(c, user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +34,15 @@ func (s *UserService) SignUp(user *models.User) (*models.User, error) {
 		return nil, fmt.Errorf("Error al hashear la contraseña: %w", err)
 	}
 	user.Contrasena = string(hashedPassword)
-	err = s.repository.Create(user)
+	err = s.repository.Create(c, user)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (s *UserService) LogIn(email, contrasena string) (*dto.LoginResponse, error) {
-	user, err := s.repository.GetByEmail(email)
+func (s *UserService) LogIn(c *server.Context, email, contrasena string) (*dto.LoginResponse, error) {
+	user, err := s.repository.GetByEmail(c, email)
 	if err != nil {
 		return nil, err
 	}

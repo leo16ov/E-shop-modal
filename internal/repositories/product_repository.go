@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"e-shop-modal/internal/models"
+	"e-shop-modal/internal/server"
 	"fmt"
 )
 
@@ -22,9 +23,9 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (s *ProductRepository) GetAll() ([]*models.Product, error) {
+func (s *ProductRepository) GetAll(c *server.Context) ([]*models.Product, error) {
 	q := `SELECT id_producto, tipo, precio, cantidad, talles, colores FROM Producto`
-	rows, err := s.db.Query(q)
+	rows, err := s.db.QueryContext(c.Context(), q)
 	if err != nil {
 		return nil, err
 	}
@@ -42,28 +43,28 @@ func (s *ProductRepository) GetAll() ([]*models.Product, error) {
 	return products, nil
 }
 
-func (s *ProductRepository) GetByID(id int) (*models.Product, error) {
+func (s *ProductRepository) GetByID(c *server.Context, id int) (*models.Product, error) {
 	q := `SELECT id_producto, tipo, precio, cantidad, talles, colores FROM Producto WHERE id_producto = $1`
 	product := models.Product{}
-	err := s.db.QueryRow(q, id).Scan(&product.ID, &product.Tipo, &product.Precio, &product.Cantidad, &product.Talles, &product.Colores)
+	err := s.db.QueryRowContext(c.Context(), q, id).Scan(&product.ID, &product.Tipo, &product.Precio, &product.Cantidad, &product.Talles, &product.Colores)
 	if err != nil {
 		return nil, err
 	}
 	return &product, nil
 }
 
-func (s *ProductRepository) Create(product *models.Product) (*models.Product, error) {
+func (s *ProductRepository) Create(c *server.Context, product *models.Product) (*models.Product, error) {
 	q := `INSERT INTO Producto(tipo, precio, cantidad, talles, colores) VALUES($1, $2, $3, $4, $5) RETURNING id_producto`
-	err := s.db.QueryRow(q, product.Tipo, product.Precio, product.Cantidad, product.Talles, product.Colores).Scan(&product.ID)
+	err := s.db.QueryRowContext(c.Context(), q, product.Tipo, product.Precio, product.Cantidad, product.Talles, product.Colores).Scan(&product.ID)
 	if err != nil {
 		return nil, err
 	}
 	return product, nil
 }
 
-func (s *ProductRepository) Update(id int, product *models.Product) (*models.Product, error) {
+func (s *ProductRepository) Update(c *server.Context, id int, product *models.Product) (*models.Product, error) {
 	q := `UPDATE producto SET tipo= $1, precio= $2, cantidad= $3, talles= $4, colores= $5 WHERE id_producto = $6`
-	result, err := s.db.Exec(q, product.Tipo, product.Precio, product.Cantidad, product.Talles, product.Colores, id)
+	result, err := s.db.ExecContext(c.Context(), q, product.Tipo, product.Precio, product.Cantidad, product.Talles, product.Colores, id)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +79,9 @@ func (s *ProductRepository) Update(id int, product *models.Product) (*models.Pro
 	return product, nil
 }
 
-func (s *ProductRepository) Delete(id int) error {
+func (s *ProductRepository) Delete(c *server.Context, id int) error {
 	q := `DELETE FROM Producto WHERE id_producto = $1`
-	result, err := s.db.Exec(q, id)
+	result, err := s.db.ExecContext(c.Context(), q, id)
 	if err != nil {
 		return err
 	}

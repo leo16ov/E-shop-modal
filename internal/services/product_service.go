@@ -3,6 +3,7 @@ package services
 import (
 	"e-shop-modal/internal/models"
 	"e-shop-modal/internal/repositories"
+	"e-shop-modal/internal/server"
 	"errors"
 )
 
@@ -22,10 +23,10 @@ func NewProductService(r *repositories.ProductRepository) *ProductService {
 	}
 }
 
-func (s *ProductService) ObtenerTodosLosProducts() ([]*models.Product, error) {
+func (s *ProductService) ObtenerTodosLosProducts(c *server.Context) ([]*models.Product, error) {
 	//s.logger.Log("Estamos obteniendo productos", "")
 
-	products, err := s.repository.GetAll()
+	products, err := s.repository.GetAll(c)
 	if err != nil {
 		//s.logger.Log("Error: %s", err.Error())
 		return nil, err
@@ -33,25 +34,25 @@ func (s *ProductService) ObtenerTodosLosProducts() ([]*models.Product, error) {
 	return products, nil
 }
 
-func (s *ProductService) ObtenerProductPorID(id int) (*models.Product, error) {
-	return s.repository.GetByID(id)
+func (s *ProductService) ObtenerProductPorID(c *server.Context, id int) (*models.Product, error) {
+	return s.repository.GetByID(c, id)
 }
 
-func (s *ProductService) SubirProduct(product models.Product) (*models.Product, error) {
+func (s *ProductService) SubirProduct(c *server.Context, product models.Product) (*models.Product, error) {
 	if product.Tipo == "" {
 		return nil, errors.New("El producto no tiene nombre")
 	}
-	return s.repository.Create(&product)
+	return s.repository.Create(c, &product)
 }
 
-func (s *ProductService) ModificarProduct(id int, product models.Product) (*models.Product, error) {
+func (s *ProductService) ModificarProduct(c *server.Context, id int, product models.Product) (*models.Product, error) {
 	if product.Tipo == "" {
 		return nil, errors.New("El producto no tiene nombre")
 	}
-	return s.repository.Update(id, &product)
+	return s.repository.Update(c, id, &product)
 }
 
-func (s *ProductService) QuitarProduct(id int) error {
-	return s.repository.Delete(id)
+func (s *ProductService) QuitarProduct(c *server.Context, id int) error {
+	return s.repository.Delete(c, id)
 
 }

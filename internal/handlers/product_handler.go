@@ -20,7 +20,7 @@ func NewProductHandler(s *services.ProductService) *ProductHandler {
 }
 
 func (h *ProductHandler) GetProducts(c *server.Context) {
-	products, err := h.services.ObtenerTodosLosProducts()
+	products, err := h.services.ObtenerTodosLosProducts(c)
 	if err != nil {
 		JSONError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -35,7 +35,7 @@ func (h *ProductHandler) CreateProduct(c *server.Context) {
 		JSONError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	created, err := h.services.SubirProduct(product)
+	created, err := h.services.SubirProduct(c, product)
 	if err != nil {
 		JSONError(c, http.StatusInternalServerError, err.Error())
 	}
@@ -48,7 +48,7 @@ func (h *ProductHandler) GetProductByID(c *server.Context) {
 		JSONError(c, http.StatusBadRequest, "ID inválido")
 		return
 	}
-	product, err := h.services.ObtenerProductPorID(id)
+	product, err := h.services.ObtenerProductPorID(c, id)
 	if err != nil {
 		JSONError(c, http.StatusNotFound,
 			"Producto no encontrado")
@@ -71,7 +71,7 @@ func (h *ProductHandler) UpdateProduct(c *server.Context) {
 		return
 	}
 
-	updated, err := h.services.ModificarProduct(id, product)
+	updated, err := h.services.ModificarProduct(c, id, product)
 	if err != nil {
 		JSONError(c, http.StatusInternalServerError, "No se pudo actualizar")
 		return
@@ -88,7 +88,7 @@ func (h *ProductHandler) DeleteProduct(c *server.Context) {
 		return
 	}
 
-	err = h.services.QuitarProduct(id)
+	err = h.services.QuitarProduct(c, id)
 	if err != nil {
 		JSONError(c, http.StatusInternalServerError, "No se pudo eliminar")
 		return

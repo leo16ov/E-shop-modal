@@ -37,7 +37,7 @@ func (h *PaymentHandler) CreateCheckout(c *server.Context) {
 	}
 
 	// Usar el context real de la request
-	resp, err := h.service.CreatePreference(c.Context(), req)
+	resp, err := h.service.CreatePreference(c, req)
 	fmt.Println(resp.ID)
 	if err != nil {
 		fmt.Printf("ERROR CreatePreference: %v\n", err.Error())
@@ -85,7 +85,7 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	}
 
 	// Proceso de errores internos no los propagamos a MP
-	if err := h.service.ProcessWebhook(payload.Data.ID); err != nil {
+	if err := h.service.ProcessWebhook(c, payload.Data.ID); err != nil {
 		log.Printf("error procesando webhook payment_id=%d: %v", payload.Data.ID, err)
 		c.JSONResponse(http.StatusOK, "ok")
 		return

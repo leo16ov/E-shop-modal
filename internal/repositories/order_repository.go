@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"e-shop-modal/internal/models"
+	"e-shop-modal/internal/server"
 	"fmt"
 )
 
@@ -16,11 +17,11 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 	}
 }
 
-func (r *OrderRepository) Create(total float64) (*models.Order, error) {
+func (r *OrderRepository) Create(c *server.Context, total float64) (*models.Order, error) {
 	orden := &models.Order{}
 	query := `INSERT INTO orden (total, estado) VALUES ($1, $2) RETURNING id_orden`
 
-	err := r.db.QueryRow(query, total, "pending").Scan(&orden.ID)
+	err := r.db.QueryRowContext(c.Context(), query, total, "pending").Scan(&orden.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,10 +31,10 @@ func (r *OrderRepository) Create(total float64) (*models.Order, error) {
 	return orden, nil
 }
 
-func (r *OrderRepository) SetExternalReference(orderID int, ref string) error {
+func (r *OrderRepository) SetExternalReference(c *server.Context, orderID int, ref string) error {
 	query := `UPDATE orden SET referencia_externa = $1 WHERE id_orden = $2`
 
-	result, err := r.db.Exec(query, ref, orderID)
+	result, err := r.db.ExecContext(c.Context(), query, ref, orderID)
 	if err != nil {
 		return err
 	}
@@ -47,10 +48,10 @@ func (r *OrderRepository) SetExternalReference(orderID int, ref string) error {
 	return nil
 }
 
-func (r *OrderRepository) UpdateStatus(orderID int, status string) error {
+func (r *OrderRepository) UpdateStatus(c *server.Context, orderID int, status string) error {
 	query := `UPDATE orden SET estado = $1 WHERE id_orden = $2`
 
-	result, err := r.db.Exec(query, status, orderID)
+	result, err := r.db.ExecContext(c.Context(), query, status, orderID)
 	if err != nil {
 		return err
 	}
@@ -65,13 +66,13 @@ func (r *OrderRepository) UpdateStatus(orderID int, status string) error {
 	return nil
 }
 
-func (r *OrderRepository) GetByID(id int) (*models.Order, error) {
+func (r *OrderRepository) GetByID(c *server.Context, id int) (*models.Order, error) {
 	query := `SELECT id_orden, total, estado, referencia_externa, fecha_emision
 		FROM orden WHERE id_orden = $1`
 
 	var order models.Order
 
-	err := r.db.QueryRow(query, id).Scan(
+	err := r.db.QueryRowContext(c.Context(), query, id).Scan(
 		&order.ID, &order.Total, &order.Status,
 		&order.ExternalReference,
 		&order.CreatedAt,
@@ -82,13 +83,13 @@ func (r *OrderRepository) GetByID(id int) (*models.Order, error) {
 	return &order, nil
 }
 
-func (r *OrderRepository) GetByExternalReference(ref string) (*models.Order, error) {
+func (r *OrderRepository) GetByExternalReference(c *server.Context, ref string) (*models.Order, error) {
 	query := `SELECT id_orden, total, estado, referencia_externa, fecha_emision
 		FROM orden WHERE referencia_externa = $1`
 
 	var order models.Order
 
-	err := r.db.QueryRow(query, ref).Scan(
+	err := r.db.QueryRowContext(c.Context(), query, ref).Scan(
 		&order.ID, &order.Total, &order.Status,
 		&order.ExternalReference,
 		&order.CreatedAt,
