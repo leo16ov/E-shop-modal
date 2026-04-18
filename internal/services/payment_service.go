@@ -115,12 +115,14 @@ func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models
 
 	req, err := http.NewRequestWithContext(c.Context(), "GET", url, nil)
 	if err != nil {
+		fmt.Printf("Error GetPayment 1")
 		return nil, err
 	}
 	req.Header.Add("Authorization", "Bearer "+s.accessToken)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
+		fmt.Printf("Error GetPayment 2")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -131,11 +133,13 @@ func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models
 		ExternalReference string  `json:"external_reference"`
 	}
 	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("Error GetPayment 3")
 		return nil, fmt.Errorf("MP respondió %d", resp.StatusCode)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
+		fmt.Printf("Error GetPayment 4")
 		return nil, fmt.Errorf("error parseando respuesta MP: %w", err)
 	}
 
