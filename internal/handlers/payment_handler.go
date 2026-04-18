@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -72,7 +73,7 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	var payload *dto.Payload
 	if err := json.Unmarshal(bodyBytes, &payload); err != nil {
 		JSONError(c, http.StatusBadRequest, "JSON inválido")
-		fmt.Println("JSON ignorada")
+		fmt.Println("JSON invalido")
 		return
 	}
 	// Filtra eventos que no son de pago
@@ -86,9 +87,12 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 		fmt.Println("Accion ignorada")
 		return
 	}
-
+	id, err := strconv.ParseInt(payload.Data.ID, 10, 64)
+	if err != nil {
+		c.JSONResponse(http.StatusBadRequest, "Formato de ID invalido")
+	}
 	// Proceso de errores internos no los propagamos a MP
-	if err := h.service.ProcessWebhook(c, payload.Data.ID); err != nil {
+	if err := h.service.ProcessWebhook(c, id); err != nil {
 		log.Printf("error procesando webhook payment_id=%d: %v", payload.Data.ID, err)
 		c.JSONResponse(http.StatusOK, "ok")
 		fmt.Printf("\nError procesando webhook payment_id=%d: %v\n", payload.Data.ID, err)
