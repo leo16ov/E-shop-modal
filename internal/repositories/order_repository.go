@@ -53,13 +53,16 @@ func (r *OrderRepository) UpdateStatus(c *server.Context, orderID int, status st
 
 	result, err := r.db.ExecContext(c.Context(), query, status, orderID)
 	if err != nil {
+		fmt.Printf("Error 4")
 		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
+		fmt.Printf("Error 5")
 		return err
 	}
 	if rowsAffected == 0 {
+		fmt.Printf("Error 6")
 		return fmt.Errorf("Orden no encontrada")
 	}
 

@@ -88,17 +88,20 @@ func (s *PaymentService) ProcessWebhook(c *server.Context, paymentID int64) erro
 	// Obtiene el pago real desde MP
 	payment, err := s.GetPayment(c, paymentID)
 	if err != nil {
+		fmt.Printf("Error 1")
 		return err
 	}
 
 	// Busca orden
 	order, err := s.orderRepo.GetByExternalReference(c, payment.ExternalReference)
 	if err != nil {
+		fmt.Printf("Error 2")
 		return err
 	}
 
 	// Valida el monto
 	if payment.TransactionAmount != order.Total {
+		fmt.Printf("Error 3")
 		return fmt.Errorf("monto inválido")
 	}
 
