@@ -72,15 +72,18 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	var payload *dto.Payload
 	if err := json.Unmarshal(bodyBytes, &payload); err != nil {
 		JSONError(c, http.StatusBadRequest, "JSON inválido")
+		fmt.Println("JSON ignorada")
 		return
 	}
 	// Filtra eventos que no son de pago
 	if payload.Type != "payment" {
 		c.JSONResponse(http.StatusOK, "evento ignorado")
+		fmt.Println("Evento ignorada")
 		return
 	}
 	if payload.Action != "payment.created" && payload.Action != "payment.updated" {
 		c.JSONResponse(http.StatusOK, "accion ignorada")
+		fmt.Println("Accion ignorada")
 		return
 	}
 
@@ -88,9 +91,10 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	if err := h.service.ProcessWebhook(c, payload.Data.ID); err != nil {
 		log.Printf("error procesando webhook payment_id=%d: %v", payload.Data.ID, err)
 		c.JSONResponse(http.StatusOK, "ok")
+		fmt.Printf("\nError procesando webhook payment_id=%d: %v\n", payload.Data.ID, err)
 		return
 	}
-
+	fmt.Println("Pago procesado")
 	c.JSONResponse(http.StatusOK, "Pago procesado")
 }
 
