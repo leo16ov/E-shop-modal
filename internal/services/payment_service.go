@@ -77,8 +77,8 @@ func (s *PaymentService) CreatePreference(c *server.Context, item *dto.CheckoutI
 			Pending: "http://localhost:3000/pending",
 		},
 		AutoReturn:        "approved",
-		ExternalReference: externalRef,*/
 		NotificationURL: "https://e-shop-modal.onrender.com/webhook",
+		ExternalReference: externalRef,*/
 	}
 	return client.Create(c.Context(), req)
 }
