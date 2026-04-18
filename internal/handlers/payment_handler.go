@@ -93,9 +93,9 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	}
 	// Proceso de errores internos no los propagamos a MP
 	if err := h.service.ProcessWebhook(c, id); err != nil {
-		log.Printf("error procesando webhook payment_id=%d: %v", payload.Data.ID, err)
+		log.Printf("error procesando webhook payment_id=%d: %v", id, err)
 		c.JSONResponse(http.StatusOK, "ok")
-		fmt.Printf("\nError procesando webhook payment_id=%d: %v\n", payload.Data.ID, err)
+		fmt.Printf("\nError procesando webhook payment_id=%d: %v\n", id, err)
 		return
 	}
 	fmt.Println("Pago procesado")
