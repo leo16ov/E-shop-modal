@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mercadopago/sdk-go/pkg/config"
 	"github.com/mercadopago/sdk-go/pkg/preference"
@@ -17,6 +18,7 @@ type PaymentService struct {
 	accessToken string
 	productRepo *repositories.ProductRepository
 	orderRepo   *repositories.OrderRepository
+	httpClient  *http.Client
 }
 
 func NewPaymentService(token string, p *repositories.ProductRepository, o *repositories.OrderRepository) *PaymentService {
@@ -24,6 +26,9 @@ func NewPaymentService(token string, p *repositories.ProductRepository, o *repos
 		accessToken: token,
 		productRepo: p,
 		orderRepo:   o,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -80,16 +85,13 @@ func (s *PaymentService) CreatePreference(c *server.Context, item *dto.CheckoutI
 func (s *PaymentService) ProcessWebhook(c *server.Context, paymentID int64) error {
 
 	// Obtiene el pago real desde MP
-	payment, err := s.GetPayment(paymentID)
+	payment, err := s.GetPayment(c, paymentID)
 	if err != nil {
 		return err
 	}
 
 	// Busca orden
-	order, err := s.orderRepo.GetByExternalReference(
-		c,
-		fmt.Sprintf("%s", payment.ExternalReference),
-	)
+	order, err := s.orderRepo.GetByExternalReference(c, payment.ExternalReference)
 	if err != nil {
 		return err
 	}
@@ -103,15 +105,17 @@ func (s *PaymentService) ProcessWebhook(c *server.Context, paymentID int64) erro
 	return s.orderRepo.UpdateStatus(c, order.ID, payment.Status)
 }
 
-func (s *PaymentService) GetPayment(paymentID int64) (*models.PaymentInfo, error) {
+func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models.PaymentInfo, error) {
 
 	url := fmt.Sprintf("https://api.mercadopago.com/v1/payments/%d", paymentID)
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(c.Context(), "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Authorization", "Bearer "+s.accessToken)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
