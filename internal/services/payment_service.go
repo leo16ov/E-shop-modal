@@ -136,6 +136,8 @@ func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models
 		fmt.Printf("Error GetPayment 3")
 		return nil, fmt.Errorf("MP respondió %d", resp.StatusCode)
 	}
+	fmt.Println(resp.StatusCode)
+	fmt.Println(resp)
 
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
