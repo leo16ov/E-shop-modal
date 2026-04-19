@@ -76,8 +76,8 @@ func (s *PaymentService) CreatePreference(c *server.Context, item *dto.CheckoutI
 			Failure: "http://localhost:3000/failure",
 			Pending: "http://localhost:3000/pending",
 		},
-		AutoReturn:        "approved",
-		NotificationURL: "https://e-shop-modal.onrender.com/webhook",*/
+		AutoReturn:        "approved",*/
+		NotificationURL:   "https://e-shop-modal.onrender.com/webhook",
 		ExternalReference: externalRef,
 	}
 	return client.Create(c.Context(), req)
@@ -127,11 +127,7 @@ func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models
 	}
 	defer resp.Body.Close()
 
-	var result struct {
-		Status            string  `json:"status"`
-		TransactionAmount float64 `json:"transaction_amount"`
-		ExternalReference string  `json:"external_reference"`
-	}
+	var result *models.PaymentInfo
 	fmt.Println(resp.StatusCode)
 	fmt.Println(resp)
 	if resp.StatusCode != http.StatusOK {
@@ -139,15 +135,11 @@ func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models
 		return nil, fmt.Errorf("MP respondió %d", resp.StatusCode)
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		fmt.Printf("Error GetPayment 4")
 		return nil, fmt.Errorf("error parseando respuesta MP: %w", err)
 	}
 
-	return &models.PaymentInfo{
-		Status:            result.Status,
-		TransactionAmount: result.TransactionAmount,
-		ExternalReference: result.ExternalReference,
-	}, nil
+	return result, nil
 }

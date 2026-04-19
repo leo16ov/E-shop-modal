@@ -89,6 +89,7 @@ func (h *PaymentHandler) ConfirmWebhook(c *server.Context) {
 	id, err := strconv.ParseInt(payload.Data.ID, 10, 64)
 	if err != nil {
 		c.JSONResponse(http.StatusBadRequest, "Formato de ID invalido")
+		return
 	}
 	// Proceso de errores internos no los propagamos a MP
 	if err := h.service.ProcessWebhook(c, id); err != nil {
