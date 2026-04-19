@@ -132,12 +132,12 @@ func (s *PaymentService) GetPayment(c *server.Context, paymentID int64) (*models
 		TransactionAmount float64 `json:"transaction_amount"`
 		ExternalReference string  `json:"external_reference"`
 	}
+	fmt.Println(resp.StatusCode)
+	fmt.Println(resp)
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("Error GetPayment 3")
 		return nil, fmt.Errorf("MP respondió %d", resp.StatusCode)
 	}
-	fmt.Println(resp.StatusCode)
-	fmt.Println(resp)
 
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
