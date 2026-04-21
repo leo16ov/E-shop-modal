@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"e-shop-modal/internal/config"
 	"errors"
 	"time"
 
@@ -15,9 +14,15 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-var SecretKey = []byte(config.LoadConfig().JWTSecret)
+type JWTManager struct {
+	secretKey []byte
+}
 
-func GenerateJWT(userID uint, email, rol string) (string, error) {
+func NewJWTManager(secret string) *JWTManager {
+	return &JWTManager{secretKey: []byte(secret)}
+}
+
+func (j *JWTManager) GenerateJWT(userID uint, email, rol string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
@@ -26,16 +31,17 @@ func GenerateJWT(userID uint, email, rol string) (string, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(SecretKey)
+	return token.SignedString(j.secretKey)
 }
 
-func ValidateJWT(tokenStr string) (*Claims, error) {
+func (j *JWTManager) ValidateJWT(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return SecretKey, nil
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("algoritmo inesperado")
+		}
+		return j.secretKey, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

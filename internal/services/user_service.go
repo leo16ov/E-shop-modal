@@ -1,6 +1,7 @@
 package services
 
 import (
+	"e-shop-modal/internal/config"
 	"e-shop-modal/internal/dto"
 	"e-shop-modal/internal/models"
 	"e-shop-modal/internal/repositories"
@@ -13,11 +14,15 @@ import (
 
 type UserService struct {
 	repository *repositories.UserRepository
+	config     *config.Config
+	jwtManager *utils.JWTManager
 }
 
-func NewUserService(r *repositories.UserRepository) *UserService {
+func NewUserService(r *repositories.UserRepository, cfg *config.Config, jwt *utils.JWTManager) *UserService {
 	return &UserService{
 		repository: r,
+		config:     cfg,
+		jwtManager: jwt,
 	}
 }
 
@@ -50,7 +55,7 @@ func (s *UserService) LogIn(c *server.Context, email, contrasena string) (*dto.L
 	if err != nil {
 		return nil, fmt.Errorf("Credenciales invalidas")
 	}
-	token, err := utils.GenerateJWT(uint(user.ID), user.Email, user.Rol)
+	token, err := s.jwtManager.GenerateJWT(uint(user.ID), user.Email, user.Rol)
 	if err != nil {
 		return nil, fmt.Errorf("Error al generar token")
 	}

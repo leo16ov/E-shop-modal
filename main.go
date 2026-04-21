@@ -8,6 +8,7 @@ import (
 	"e-shop-modal/internal/repositories"
 	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/services"
+	"e-shop-modal/internal/utils"
 	"fmt"
 	"net/http"
 
@@ -15,8 +16,8 @@ import (
 )
 
 func main() {
-	config := config.LoadConfig()
-	dsn := config.DSN
+	cfg := config.LoadConfig()
+	dsn := cfg.DSN
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -27,52 +28,60 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Conectado a la DB")
+	jwtManager := utils.NewJWTManager(string(cfg.JWTSecret))
+
 	productRepository := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepository)
 	productHandler := handlers.NewProductHandler(productService)
 
 	userRepository := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepository)
+	userService := services.NewUserService(userRepository, cfg, jwtManager)
 	userHandler := handlers.NewUserHandler(userService)
 
 	orderRepository := repositories.NewOrderRepository(db)
-	paymentService := services.NewPaymentService(config.MPToken, productRepository, orderRepository)
-	paymentHandler := handlers.NewPaymentHandler(paymentService, config.WebhookSecret)
+	paymentService := services.NewPaymentService(cfg.MPToken, cfg.NotificationURL, productRepository, orderRepository)
+	paymentHandler := handlers.NewPaymentHandler(paymentService, cfg.WebhookSecret)
+
+	googleConfig := config.NewGoogleOAuthConfig(cfg.OAuthIDClient, cfg.OAuthSecretClient, cfg.OAuthRedirectURL, []string{"email", "profile"})
+	oauthService := services.NewOAuthService(userRepository, googleConfig)
+	oauthHandler := handlers.NewOAuthHandler(oauthService, cfg, jwtManager, googleConfig)
 
 	mux := http.NewServeMux()
 	// públicas
-	server.HandleFunc(mux, "POST /signup", userHandler.HandleSignUp)
-	server.HandleFunc(mux, "POST /login", userHandler.HandleLogIn)
-	server.HandleFunc(mux, "POST /webhook", paymentHandler.ConfirmWebhook)
-
+	server.HandleFunc(mux, "POST /v1/signup", userHandler.HandleSignUp)
+	server.HandleFunc(mux, "POST /v1/login", userHandler.HandleLogIn)
+	server.HandleFunc(mux, "GET /v1/oauth/", oauthHandler.GoogleLogin)
+	server.HandleFunc(mux, "GET /v1/oauth/callback", oauthHandler.GoogleCallback)
+	server.HandleFunc(mux, "POST /v1/webhook", paymentHandler.ConfirmWebhook)
+	authMiddleware := middleware.NewAuthMiddleware(jwtManager)
 	// protegidas
 	server.HandleProtected(
-		mux, "GET /profile", userHandler.Profile,
-		middleware.Authentication,
+		mux, "GET /v1/profile", userHandler.Profile,
+		authMiddleware.Authentication,
 	)
 	server.HandleProtected(
-		mux, "GET /products", productHandler.GetProducts,
-		middleware.Authentication,
+		mux, "GET /v1/products", productHandler.GetProducts,
+		authMiddleware.Authentication,
 	)
 	server.HandleProtected(
-		mux, "POST /products", productHandler.CreateProduct,
-		middleware.Authentication,
+		mux, "POST /v1/products", productHandler.CreateProduct,
+		authMiddleware.Authentication,
 	)
 	server.HandleProtected(
-		mux, "GET /products/", productHandler.GetProductByID,
-		middleware.Authentication,
+		mux, "GET /v1/products/", productHandler.GetProductByID,
+		authMiddleware.Authentication,
 	)
 	server.HandleProtected(
-		mux, "PUT /products/", productHandler.UpdateProduct,
-		middleware.Authentication,
+		mux, "PUT /v1/products/", productHandler.UpdateProduct,
+		authMiddleware.Authentication,
 	)
 	server.HandleProtected(
-		mux, "DELETE /products/", productHandler.DeleteProduct,
-		middleware.Authentication,
+		mux, "DELETE /v1/products/", productHandler.DeleteProduct,
+		authMiddleware.Authentication,
 	)
 	server.HandleProtected(
-		mux, "POST /payment", paymentHandler.CreateCheckout,
-		middleware.Authentication,
+		mux, "POST /v1/payment", paymentHandler.CreateCheckout,
+		authMiddleware.Authentication,
 	)
 
 	http.ListenAndServe(":8080", mux)

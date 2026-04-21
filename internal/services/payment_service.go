@@ -15,17 +15,19 @@ import (
 )
 
 type PaymentService struct {
-	accessToken string
-	productRepo *repositories.ProductRepository
-	orderRepo   *repositories.OrderRepository
-	httpClient  *http.Client
+	accessToken     string
+	notificationURL string
+	productRepo     *repositories.ProductRepository
+	orderRepo       *repositories.OrderRepository
+	httpClient      *http.Client
 }
 
-func NewPaymentService(token string, p *repositories.ProductRepository, o *repositories.OrderRepository) *PaymentService {
+func NewPaymentService(MPToken, URL string, p *repositories.ProductRepository, o *repositories.OrderRepository) *PaymentService {
 	return &PaymentService{
-		accessToken: token,
-		productRepo: p,
-		orderRepo:   o,
+		accessToken:     MPToken,
+		notificationURL: URL,
+		productRepo:     p,
+		orderRepo:       o,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -77,7 +79,7 @@ func (s *PaymentService) CreatePreference(c *server.Context, item *dto.CheckoutI
 			Pending: "http://localhost:3000/pending",
 		},
 		AutoReturn:        "approved",*/
-		NotificationURL:   "https://e-shop-modal.onrender.com/webhook",
+		NotificationURL:   s.notificationURL,
 		ExternalReference: externalRef,
 	}
 	return client.Create(c.Context(), req)

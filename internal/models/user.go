@@ -9,4 +9,5 @@ type User struct {
 	Rol        string `json:"rol"`
 	DNI        int    `json:"dni"`
 	Telefono   string `json:"telefono"`
+	Provider   string `json:"provider"`
 }
