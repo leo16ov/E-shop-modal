@@ -36,7 +36,7 @@ func (h *OAuthHandler) GoogleLogin(c *server.Context) {
 		Value:    state,
 		MaxAge:   600, // 10 minutos, suficiente para completar el flujo
 		HttpOnly: true,
-		Secure:   false, // true en producción
+		Secure:   true, // true en producción
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 	})
