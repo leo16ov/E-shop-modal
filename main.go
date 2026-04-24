@@ -44,7 +44,7 @@ func main() {
 
 	googleConfig := config.NewGoogleOAuthConfig(cfg.OAuthIDClient, cfg.OAuthSecretClient, cfg.OAuthRedirectURL, []string{"email", "profile"})
 	oauthService := services.NewOAuthService(userRepository, googleConfig)
-	oauthHandler := handlers.NewOAuthHandler(oauthService, cfg, jwtManager, googleConfig)
+	oauthHandler := handlers.NewOAuthHandler(oauthService, jwtManager, googleConfig)
 
 	mux := http.NewServeMux()
 	// públicas

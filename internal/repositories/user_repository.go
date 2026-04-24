@@ -18,9 +18,19 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) Create(c *server.Context, user *models.User) error {
-	q := `INSERT INTO Usuario(nombre, apellido, email, contrasena, telefono, dni, rol) 
-		VALUES($1, $2, $3, $4, $5, $6, 'Admin') RETURNING id_usuario`
+	q := `INSERT INTO Usuario(nombre, apellido, email, contrasena, telefono, dni, provider, rol) 
+		VALUES($1, $2, $3, $4, $5, $6, 'app', 'Admin') RETURNING id_usuario`
 	err := r.db.QueryRowContext(c.Context(), q, user.Nombre, user.Apellido, user.Email, user.Contrasena, user.Telefono, user.DNI).Scan(&user.ID)
+	if err != nil {
+		return fmt.Errorf("Error al crear usuario %w", err)
+	}
+	return nil
+}
+
+func (r *UserRepository) CreateUserOAuth(c *server.Context, user *models.User) error {
+	q := `INSERT INTO Usuario(nombre, apellido, email, provider, rol)
+          VALUES($1, $2, $3, $4, 'Cliente') RETURNING id_usuario, rol`
+	err := r.db.QueryRowContext(c.Context(), q, user.Nombre, user.Apellido, user.Email, user.Provider).Scan(&user.ID, &user.Rol)
 	if err != nil {
 		return fmt.Errorf("Error al crear usuario %w", err)
 	}
@@ -40,11 +50,15 @@ func (r *UserRepository) EmailExists(c *server.Context, email string) (bool, err
 
 func (r *UserRepository) GetByEmail(c *server.Context, email string) (*models.User, error) {
 	var user models.User
-	q := "SELECT id_usuario, nombre, apellido, contrasena, rol, email FROM Usuario WHERE email= $1"
+	var contrasena sql.NullString
 
-	err := r.db.QueryRowContext(c.Context(), q, email).Scan(&user.ID, &user.Nombre, &user.Apellido, &user.Contrasena, &user.Rol, &user.Email)
+	q := "SELECT id_usuario, nombre, apellido, contrasena, rol, email, provider FROM Usuario WHERE email= $1"
+
+	err := r.db.QueryRowContext(c.Context(), q, email).Scan(&user.ID, &user.Nombre, &user.Apellido, &contrasena, &user.Rol, &user.Email, &user.Provider)
 	if err != nil {
-		return nil, fmt.Errorf("Error al obtener el usuario")
+		return nil, fmt.Errorf("Error al obtener el usuario: %w", err)
 	}
+
+	user.Contrasena = contrasena.String // si es NULL, queda como ""
 	return &user, nil
 }

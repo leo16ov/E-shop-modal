@@ -26,7 +26,7 @@ func LoadConfig() *Config {
 	}
 	if getEnv("DEBUG", "dev") == "dev" {
 		return &Config{
-			DSN:               getEnv("DSN_Cloud", "..."),
+			DSN:               getEnv("DSN_Local", "..."),
 			Debug:             getEnv("DEBUG", "Dev"),
 			JWTSecret:         []byte(getEnv("JWT_SECRET", "mysecretkey")),
 			MPToken:           getEnv("TOKEN_MP_TEST", "..."),

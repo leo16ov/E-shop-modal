@@ -22,6 +22,8 @@ type UserOAuth struct {
 }
 
 type UserGoogle struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
 }

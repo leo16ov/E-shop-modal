@@ -24,7 +24,7 @@ func NewOAuthService(r *repositories.UserRepository, oauthConfig *oauth2.Config)
 	}
 }
 
-func (s *OAuthService) LoginWithGoogle(c *server.Context, googleOAuthConfig *oauth2.Config, cID, cSecret, URL, code string) (*dto.UserOAuth, error) {
+func (s *OAuthService) LoginWithGoogle(c *server.Context, googleOAuthConfig *oauth2.Config, code string) (*dto.UserOAuth, error) {
 	// Intercambia code por token
 	token, err := s.googleOAuthConfig.Exchange(c.Context(), code)
 	if err != nil {
@@ -45,33 +45,48 @@ func (s *OAuthService) LoginWithGoogle(c *server.Context, googleOAuthConfig *oau
 		return nil, err
 	}
 	var userGoogle dto.UserGoogle
-	json.Unmarshal(body, &userGoogle)
+	if err := json.Unmarshal(body, &userGoogle); err != nil {
+		return nil, err
+	}
 
-	// Buscar usuario en DB
-	user, err := s.repository.GetByEmail(c, userGoogle.Email)
-
-	if user == nil {
-		if userGoogle.Email == "" {
-			return nil, errors.New("email no recibido de Google")
-		}
+	// Valida si exite ese email en la DB
+	exist, err := s.repository.EmailExists(c, userGoogle.Email)
+	if err != nil {
+		return nil, err
+	}
+	if userGoogle.Email == "" {
+		return nil, errors.New("Email no recibido de Google")
+	}
+	if !exist {
 		// Crea usuario si no esta registrado
 		newUser := &models.User{
 			Email:    userGoogle.Email,
-			Nombre:   userGoogle.Name,
+			Nombre:   userGoogle.GivenName,
+			Apellido: userGoogle.FamilyName,
 			Provider: "google",
 		}
 
-		err = s.repository.Create(c, newUser)
+		err = s.repository.CreateUserOAuth(c, newUser)
 		if err != nil {
 			return nil, err
 		}
 		return &dto.UserOAuth{
-			Nombre: newUser.Nombre,
-			Email:  newUser.Email,
+			ID:       newUser.ID,
+			Nombre:   newUser.Nombre,
+			Email:    newUser.Email,
+			Rol:      newUser.Rol,
+			Provider: newUser.Provider,
 		}, nil
 	}
+	user, err := s.repository.GetByEmail(c, userGoogle.Email)
+	if err != nil {
+		return nil, err
+	}
 	return &dto.UserOAuth{
-		Nombre: user.Nombre,
-		Email:  user.Email,
+		ID:       user.ID,
+		Nombre:   user.Nombre,
+		Email:    user.Email,
+		Rol:      user.Rol,
+		Provider: user.Provider,
 	}, nil
 }

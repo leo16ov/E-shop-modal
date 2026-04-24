@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"e-shop-modal/internal/config"
 	"e-shop-modal/internal/server"
 	"e-shop-modal/internal/services"
 	"e-shop-modal/internal/utils"
@@ -12,15 +11,13 @@ import (
 
 type OAuthHandler struct {
 	service           *services.OAuthService
-	config            *config.Config
 	jwtManager        *utils.JWTManager
 	googleOAuthConfig *oauth2.Config
 }
 
-func NewOAuthHandler(s *services.OAuthService, cfg *config.Config, jwt *utils.JWTManager, oauthConfig *oauth2.Config) *OAuthHandler {
+func NewOAuthHandler(s *services.OAuthService, jwt *utils.JWTManager, oauthConfig *oauth2.Config) *OAuthHandler {
 	return &OAuthHandler{
 		service:           s,
-		config:            cfg,
 		jwtManager:        jwt,
 		googleOAuthConfig: oauthConfig,
 	}
@@ -39,7 +36,7 @@ func (h *OAuthHandler) GoogleLogin(c *server.Context) {
 		Value:    state,
 		MaxAge:   600, // 10 minutos, suficiente para completar el flujo
 		HttpOnly: true,
-		Secure:   h.config.Debug != "dev", // true en producción
+		Secure:   false, // true en producción
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 	})
@@ -74,7 +71,7 @@ func (h *OAuthHandler) GoogleCallback(c *server.Context) {
 
 	// Continua con el flujo normal
 	code := c.Request.URL.Query().Get("code")
-	user, err := h.service.LoginWithGoogle(c, h.googleOAuthConfig, h.config.OAuthIDClient, h.config.OAuthSecretClient, h.config.NotificationURL, code)
+	user, err := h.service.LoginWithGoogle(c, h.googleOAuthConfig, code)
 	if err != nil {
 		JSONError(c, http.StatusInternalServerError, "Error en login")
 		return
